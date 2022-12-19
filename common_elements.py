@@ -19,10 +19,9 @@ def common(list1, list2):
     >>> common(['a', 'a', 'b'], ['a', 'a', 'x'])
     ['a']
     """
-    pass
-    """
-    You implement this function.  Don't forget to remove the 'pass' statement above.
-    """
+    common_elements = list(set(list1).intersection(list2))
+    common_elements.sort()
+    return common_elements
 
 
 def main():
