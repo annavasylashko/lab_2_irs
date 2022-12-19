@@ -29,41 +29,56 @@ def create_index(filenames, index, file_titles):
     >>> index = {}
     >>> file_titles = {}
     >>> create_index(['test1.txt'], index, file_titles)
-    >>> index
-    {'file': ['test1.txt'], '1': ['test1.txt'], 'title': ['test1.txt'], 'apple': ['test1.txt'], 'ball': ['test1.txt'], 'carrot': ['test1.txt']}
+    >>> index == {'file': {'test1.txt': 1}, '1': {'test1.txt': 1}, 'titl': {'test1.txt': 1}, 'appl': {'test1.txt': 1}, 'ball': {'test1.txt': 2}, 'carrot': {'test1.txt': 1}}
+    True
     >>> file_titles
     {'test1.txt': 'File 1 Title'}
     >>> index = {}
     >>> file_titles = {}
     >>> create_index(['test2.txt'], index, file_titles)
-    >>> index
-    {'file': ['test2.txt'], '2': ['test2.txt'], 'title': ['test2.txt'], 'ball': ['test2.txt'], 'carrot': ['test2.txt'], 'dog': ['test2.txt']}
+    >>> index == {'file': {'test2.txt': 1}, '2': {'test2.txt': 1}, 'titl': {'test2.txt': 1}, 'ball': {'test2.txt': 1}, 'carrot': {'test2.txt': 1}, 'dog': {'test2.txt': 1}}
+    True
     >>> file_titles
     {'test2.txt': 'File 2 Title'}
     >>> index = {}
     >>> file_titles = {}
     >>> create_index(['test1.txt', 'test2.txt'], index, file_titles)
-    >>> index
-    {'file': ['test1.txt', 'test2.txt'], '1': ['test1.txt'], 'title': ['test1.txt', 'test2.txt'], 'apple': ['test1.txt'], 'ball': ['test1.txt', 'test2.txt'], 'carrot': ['test1.txt', 'test2.txt'], '2': ['test2.txt'], 'dog': ['test2.txt']}
+    >>> index == {'file': {'test1.txt': 1, 'test2.txt': 1}, '1': {'test1.txt': 1}, 'titl': {'test1.txt': 1, 'test2.txt': 1}, 'appl': {'test1.txt': 1}, 'ball': {'test1.txt': 2, 'test2.txt': 1}, 'carrot': {'test1.txt': 1, 'test2.txt': 1}, '2': {'test2.txt': 1}, 'dog': {'test2.txt': 1}}
+    True
     >>> index = {}
     >>> file_titles = {}
     >>> create_index(['test1.txt', 'test2.txt', 'test2.txt'], index, file_titles)
-    >>> index
-    {'file': ['test1.txt', 'test2.txt'], '1': ['test1.txt'], 'title': ['test1.txt', 'test2.txt'], 'apple': ['test1.txt'], 'ball': ['test1.txt', 'test2.txt'], 'carrot': ['test1.txt', 'test2.txt'], '2': ['test2.txt'], 'dog': ['test2.txt']}
+    >>> index == {'file': {'test1.txt': 1, 'test2.txt': 1}, '1': {'test1.txt': 1}, 'titl': {'test1.txt': 1, 'test2.txt': 1}, 'appl': {'test1.txt': 1}, 'ball': {'test1.txt': 2, 'test2.txt': 1}, 'carrot': {'test1.txt': 1, 'test2.txt': 1}, '2': {'test2.txt': 1}, 'dog': {'test2.txt': 1}}
+    True
     >>> file_titles
     {'test1.txt': 'File 1 Title', 'test2.txt': 'File 2 Title'}
-    >>> index = {'file': ['test1.txt'], '1': ['test1.txt'], 'title': ['test1.txt'], 'apple': ['test1.txt'], 'ball': ['test1.txt'], 'carrot': ['test1.txt']}
+    >>> index = {'file': {'test1.txt': 1}, '1': {'test1.txt': 1}, 'titl': {'test1.txt': 1}, 'appl': {'test1.txt': 1}, 'ball': {'test1.txt': 2}, 'carrot': {'test1.txt': 1}}
     >>> file_titles = {'test1.txt': 'File 1 Title'}
     >>> create_index([], index, file_titles)
-    >>> index
-    {'file': ['test1.txt'], '1': ['test1.txt'], 'title': ['test1.txt'], 'apple': ['test1.txt'], 'ball': ['test1.txt'], 'carrot': ['test1.txt']}
+    >>> index == {'file': {'test1.txt': 1}, '1': {'test1.txt': 1}, 'titl': {'test1.txt': 1}, 'appl': {'test1.txt': 1}, 'ball': {'test1.txt': 2}, 'carrot': {'test1.txt': 1}}
+    True
     >>> file_titles
     {'test1.txt': 'File 1 Title'}
     """
-    pass
-    """
-    You implement this function.  Don't forget to remove the 'pass' statement above.
-    """
+    for filename in filenames:
+        text = open(filename).read()
+        # get title
+        title = text.split('\n', 1)[0]
+        file_titles[filename] = title
+        # get words without punctuation and filter out stopwords
+        words = list(map(lambda word: word.strip(string.punctuation).lower(), text.split()))
+        words = list(filter(lambda word: len(word) > 0, words))
+        # remove stopwords and stem them
+        from extension import filter_stopwords, stem_words
+        words = filter_stopwords(words)
+        words = stem_words(words)
+        unique = list(set(words))
+        for word in unique:
+            count = words.count(word)
+            if word not in index:
+                index[word] = {filename: count}
+            else:
+                index[word][filename] = count
 
 
 def search(index, query):
@@ -80,30 +95,44 @@ def search(index, query):
     >>> index = {}
     >>> create_index(['test1.txt', 'test2.txt'], index, {})
     >>> search(index, 'apple')
-    ['test1.txt']
-    >>> search(index, 'ball')
-    ['test1.txt', 'test2.txt']
-    >>> search(index, 'file')
-    ['test1.txt', 'test2.txt']
+    {'test1.txt': 1}
+    >>> search(index, 'ball') == {'test1.txt': 2, 'test2.txt': 1}
+    True
+    >>> search(index, 'file') == {'test1.txt': 1, 'test2.txt': 1}
+    True
     >>> search(index, '2')
-    ['test2.txt']
+    {'test2.txt': 1}
     >>> search(index, 'carrot')
-    ['test1.txt', 'test2.txt']
+    {'test1.txt': 1, 'test2.txt': 1}
     >>> search(index, 'dog')
-    ['test2.txt']
+    {'test2.txt': 1}
     >>> search(index, 'nope')
-    []
+    {}
     >>> search(index, 'apple carrot')
-    ['test1.txt']
+    {'test1.txt': 2}
     >>> search(index, 'apple ball file')
-    ['test1.txt']
+    {'test1.txt': 4}
     >>> search(index, 'apple ball nope')
-    []
+    {}
     """
-    pass
-    """
-    You implement this function.  Don't forget to remove the 'pass' statement above.
-    """
+
+    words = query.split()
+    # remove stopwords and stem them
+    from extension import filter_stopwords, stem_words
+    words = filter_stopwords(words)
+    words = stem_words(words)
+    words = list(set(words))
+    result = {}
+    for word in words:
+        if not word in index:
+            return {}
+        for filename in index[word]:
+            if not filename in result:
+                result[filename] = 0
+            result[filename] += index[word][filename]
+    # take only that fields of result dict, that are in all index[<query word>] values
+    result = { filename: result[filename] for filename in list(filter(lambda filename: all(filename in index[word] for word in words), result))}
+    return result
 
 
 ##### YOU SHOULD NOT NEED TO MODIFY ANY CODE BELOW THIS LINE (UNLESS YOU'RE ADDING EXTENSIONS) #####
@@ -125,9 +154,9 @@ def do_searches(index, file_titles):
         # display query results
         print("Results for query '" + query + "':")
         if results:                             # check for non-empty results list
-            for i in range(len(results)):
-                title = file_titles[results[i]]
-                print(str(i + 1) + ".  Title: " + title + ",  File: " + results[i])
+            for filename in results:
+                title = file_titles[filename]
+                print("Title: " + title + ",  File: " + filename)
         else:
             print("No results match that query.")
 

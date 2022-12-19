@@ -26,7 +26,10 @@ class SearchServer:
         """
         self.html = open('extension_client.html').read()
 
-        # TODO: Your code here. Change this code to load any data you want to use!
+        files = textfiles_in_dir(DIRECTORY)
+        self.index = {}
+        self.file_titles = {}
+        create_index(files, self.index, self.file_titles)
 
     # this is the server request callback function. You can't change its name or params!!!
     def handle_request(self, request):
@@ -43,10 +46,21 @@ class SearchServer:
 
         # if the command is search, the client wants you to perform a search!
         if request.command == 'search':
-            # right now we respond to a search request with an empty string.
-            # TODO: Your code here. change this code to return the string version 
-            # of a list of dicts. Use json.dumps(collection) to turn a list into a string
-            return ''
+            result = search(self.index, request.params['query'])
+            # sort result by occurencies, take keys (filenames), and limit result count to MAX_RESPONSES_PER_REQUEST
+            filenames = list(dict(sorted(result.items(), key=lambda item: item[1], reverse=True)).keys())[:MAX_RESPONSES_PER_REQUEST]
+            # take titles from resulting filenames
+            result = list(map(lambda filename: {
+                    'title': self.file_titles[filename], 
+                    'url': '/file?relative_path=' + filename,
+                    'snippet': f'Rating: {result[filename]}'
+                }, 
+                filenames))
+            return json.dumps(result)
+
+        if request.command == 'file':
+            result = open(request.params['relative_path']).read()
+            return result
 
 
 def main():
